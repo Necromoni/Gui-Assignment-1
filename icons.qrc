@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>images/copy.png</file>
+        <file>images/cut.png</file>
+        <file>images/new.png</file>
+        <file>images/open.png</file>
+        <file>images/paste.png</file>
+        <file>images/printer.png</file>
+        <file>images/save.png</file>
+        <file>images/redo.png</file>
+        <file>images/undo.png</file>
+        <file>images/en.png</file>
+        <file>images/es.png</file>
+        <file>images/sv.png</file>
+    </qresource>
+    <qresource prefix="/translations">
+        <file>translations/davidquantexteditor_en.qm</file>
+        <file>translations/davidquantexteditor_es.qm</file>
+        <file>translations/davidquantexteditor_sv.qm</file>
+    </qresource>
+</RCC>
