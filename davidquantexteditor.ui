@@ -17,7 +17,25 @@
    <iconset resource="icons.qrc">
     <normaloff>:/icons/images/new.png</normaloff>:/icons/images/new.png</iconset>
   </property>
-  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QWidget" name="textWidget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+        <horstretch>3</horstretch>
+        <verstretch>3</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QTextEdit" name="textEdit"/>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
@@ -64,10 +82,19 @@
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
    </widget>
+   <widget class="QMenu" name="menu_Language">
+    <property name="title">
+     <string>&amp;Language</string>
+    </property>
+    <addaction name="actionEnglish"/>
+    <addaction name="actionSpanish"/>
+    <addaction name="actionSwedish"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_Edit"/>
    <addaction name="menu_View"/>
    <addaction name="menu_Help"/>
+   <addaction name="menu_Language"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -289,7 +316,7 @@
   <action name="actionEnglish">
    <property name="icon">
     <iconset resource="icons.qrc">
-     <normaloff>:/icons/images/english.png</normaloff>:/icons/images/english.png</iconset>
+     <normaloff>:/icons/images/en.png</normaloff>:/icons/images/en.png</iconset>
    </property>
    <property name="text">
     <string>English</string>
@@ -298,7 +325,7 @@
   <action name="actionSpanish">
    <property name="icon">
     <iconset resource="icons.qrc">
-     <normaloff>:/icons/images/spanish.png</normaloff>:/icons/images/spanish.png</iconset>
+     <normaloff>:/icons/images/es.png</normaloff>:/icons/images/es.png</iconset>
    </property>
    <property name="text">
     <string>Español</string>
@@ -307,7 +334,7 @@
   <action name="actionSwedish">
    <property name="icon">
     <iconset resource="icons.qrc">
-     <normaloff>:/icons/images/swedish.png</normaloff>:/icons/images/swedish.png</iconset>
+     <normaloff>:/icons/images/sv.png</normaloff>:/icons/images/sv.png</iconset>
    </property>
    <property name="text">
     <string>Svenska</string>

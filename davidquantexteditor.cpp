@@ -23,8 +23,15 @@ DavidQuanTextEditor::DavidQuanTextEditor(QWidget *parent) :
     connect(ui->actionSave, SIGNAL(triggered()), this, SLOT(saveFile()));
     connect(ui->actionSaveAs, SIGNAL(triggered()), this, SLOT(saveFileAs()));
 
-    setupLanguageActionGroup();
+    QString locale = "en";
+    ui->actionEnglish->setData(locale);
+    locale = "es";
+    ui->actionSpanish->setData(locale);
+    locale = "sv";
+    ui->actionSwedish->setData(locale);
+    ui->textEdit->close(); //close the text editor created by the UI for a workaround on the layout
 
+    //setupLanguageActionGroup();
 }
 
 //DESTRUCTOR
@@ -38,7 +45,7 @@ DavidQuanTextEditor::~DavidQuanTextEditor()
 //NEW ACTION
 void DavidQuanTextEditor::on_actionNew_triggered()
 {
-    addTextEditor();
+    addTextEditor(); //calls helper function addTextEditor with no name
 }
 
 //CLOSE ACTION
@@ -110,29 +117,33 @@ void DavidQuanTextEditor::on_actionOpen_triggered()
 //PRINT ACTION; DOES NOT WORK WITH QT5
 void DavidQuanTextEditor::on_actionPrint_triggered()
 {
-    ui->statusBar->showMessage(tr("QT 5 does not support printing. Please see .cpp file"), 2000);
-    //*****QT 5 CANNOT USE THESE FUNCTIONS BECAUSE QPrinter DOES NOT EXIST IN QT5*****
-    /*const QTextDocument *document = textEditors.top()->document();
+    //ui->statusBar->showMessage(tr("QT 5 does not support printing. Please see .cpp file"), 2000);
+    //*****RESOLVED QT5 PRINT SUPPORT BY USING QtPrintSupport/QPrinter*****
+    const QTextDocument *document = textEditors.top()->document();
     QPrinter printer;
-    QPrintDialog printerDialog;
-    if (printerDialog.exec())
-    {
-        document->print(&printer);
-        ui->statusBar->showMessage(tr("Document Printed"), 2000);
-    }
-    else
+    QPrintDialog printerDialog(&printer,this);
+    if (printerDialog.exec() != QDialog::Accepted)
     {
         ui->statusBar->showMessage(tr("Failed to Print"), 2000);
-    }*/
+        return;
+    }
+    document->print(&printer);
+    ui->statusBar->showMessage(tr("Document Printed"), 2000);
+
 }
 //END OF ACTION SECTION//
 
 void DavidQuanTextEditor::switchLanguage(QAction * action)
 {
     QString locale = action->data().toString();
-    QString qmPath = qApp->applicationDirPath() + "/translations";
-    appTranslator.load("davidquantexteditor_" + locale, qmPath);
-    qtTranslator.load("davidquantexteditor_" + locale, qmPath);
+    if (!appTranslator.load("/translations/translations/davidquantexteditor_" + locale))
+    {
+        ui->statusBar->showMessage ("Failed to Load appTranslator", 5000);
+    }
+    if (qtTranslator.load(":/translations/translations/davidquantexteditor_" + locale))
+    {
+        ui->statusBar->showMessage ("Failed to Load qtTranslator", 5000);
+    }
 
     ui->retranslateUi(this);
 
@@ -151,12 +162,12 @@ void DavidQuanTextEditor::setupLanguageActionGroup()
     connect(&languageActionGroup, SIGNAL(triggered(QAction *)), this, SLOT(switchLanguage(QAction *)));
 
     QDir directory(qmPath);
-    QStringList fileNames = directory.entryList(QStringList("davidtexteditor_*.qm"));
+    QStringList fileNames = directory.entryList(QStringList("davidquantexteditor_*.qm"));
 
     for (int i = 0; i < fileNames.size(); i++)
     {
         QString locale = fileNames[i]; //get file names iteratively
-        locale.remove(0, locale.indexOf('_') + 1);
+        locale.remove(0, locale.indexOf('_') + 1); //get the locale out of the file name
         locale.truncate(locale.lastIndexOf('.'));
 
         QTranslator translator;
@@ -164,8 +175,9 @@ void DavidQuanTextEditor::setupLanguageActionGroup()
         QString language = translator.translate("MainWindow", "English");
 
         QAction *action = new QAction(tr("%1 + %2").arg(i + 1).arg(language), this);
-        QIcon icon(":/icons" + locale + ".png");
-        action->setIcon(icon);
+        QIcon icon(":/icons" + locale + ".png"); //gets the icon for that locale
+        action->setText(locale);
+        action->setIcon(icon); //sets the icon for the action
 
         action->setCheckable(true);
         action->setData(locale);
@@ -176,11 +188,12 @@ void DavidQuanTextEditor::setupLanguageActionGroup()
         if (language == "English")
         {
             action->setChecked(true); //set english to default
+            action->setVisible(true);
         }
     }
-    ui->menuBar->addMenu(languageMenu);
-    languageMenu->setTitle(tr("&Language"));
-    languageMenu->addActions(languageActionGroup.actions());
+    ui->menuBar->addMenu(languageMenu);     //add the menu to the menubar
+    languageMenu->setTitle(tr("&Language")); //set the title
+    languageMenu->addActions(languageActionGroup.actions()); //add all the actions via action list
     languageMenu->show();
 }
 
@@ -224,7 +237,7 @@ void DavidQuanTextEditor::documentModified()
         (textEditors.top())->setWindowModified(true); //the top text editor had to be the modified one
     }
 
-    if (!isWindowModified())
+    if (!isWindowModified()) //we didnt mess with the main window
     {
         setWindowTitle(windowTitle() + "[*]");
         setWindowModified(true);
@@ -255,6 +268,7 @@ bool DavidQuanTextEditor::reconsiderClose()
 void DavidQuanTextEditor::removeTextEditor()
 {
     textEditors.top()->hide(); //hide the top text editor
+    ui->gridLayout_2->removeWidget(textEditors.top());
     textEditors.top()->close();//close the top text editor
     textEditors.pop(); //pop it off the stack
     names.pop(); //pop old name off stack
@@ -262,6 +276,7 @@ void DavidQuanTextEditor::removeTextEditor()
     {
         ui->statusBar->showMessage(tr("File Closed"), 2000);
         textEditors.top()->show(); //if there is one show it
+        ui->gridLayout_2->addWidget(textEditors.top()); //add it to the layout
         reconnectActionsToEditor();
         setFileName(names.top());
     }
@@ -270,11 +285,16 @@ void DavidQuanTextEditor::removeTextEditor()
 //ADD A TEXT EDITOR TO THE TOP OF THE STACK WITH A NAME
 void DavidQuanTextEditor::addTextEditor(const QString &fileName = QString()) //add a text editor with a name
 {
-    QTextEdit * textEditor = new QTextEdit(this);   //create a new text editor, set the parent to the default one
-    if (!textEditors.empty()) { textEditor->hide(); }       //hide the last text editor if there is one
-    textEditor->setGeometry(TEXT_EDITOR_X_POS, TEXT_EDITOR_Y_POS, TEXT_EDITOR_HEIGHT, TEXT_EDITOR_WIDTH);
+    QTextEdit * textEditor = new QTextEdit(ui->textWidget); //create a new text editor, set the parent to the default one
+    ui->gridLayout_2->addWidget(textEditor);                //add the widget to the layout for the textWidget
+    if (!textEditors.empty())
+    {
+        textEditor->hide();
+        ui->gridLayout_2->removeWidget(textEditors.top());
+    } //hide the last text editor if there is one
     textEditors.push(textEditor);                           //put this text editor on the stack
     textEditor->show();                                     //show this text editor
+    textEditor->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     reconnectActionsToEditor();
     names.push(fileName);
 
@@ -298,12 +318,17 @@ void DavidQuanTextEditor::addTextEditor(const QString &fileName = QString()) //a
 //ADD A TEXT EDITOR TO THE TOP OF THE STACK WITHOUT A NAME
 void DavidQuanTextEditor::addTextEditor() //add a text editor without a name
 {
-    QTextEdit * textEditor = new QTextEdit(this);   //create a new text editor, set the parent to the default one
-    if (!textEditors.empty()) { textEditor->hide(); }       //hide the last text editor if there is one
-    textEditor->setGeometry(TEXT_EDITOR_X_POS, TEXT_EDITOR_Y_POS, TEXT_EDITOR_HEIGHT, TEXT_EDITOR_WIDTH);
+    QTextEdit * textEditor = new QTextEdit(ui->textWidget); //create a new text editor, set the parent to the textWidget one
+    ui->gridLayout_2->addWidget(textEditor);                //add the widget to the layout for the textWidget
+    if (!textEditors.empty())
+    {
+        textEditor->hide();
+        ui->gridLayout_2->removeWidget(textEditors.top());
+    }       //hide the last text editor if there is one
     textEditors.push(textEditor);                           //put this text editor on the stack
     textEditor->show();                                     //show this text editor
     reconnectActionsToEditor();
+    textEditor->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     names.push(QString()); //push a null name on stack
 
     ui->actionUndo->setEnabled(false);
@@ -407,6 +432,8 @@ bool DavidQuanTextEditor::saveFile() //we check if name is null and set name to 
         qDebug("Saving");
         file.close();
         textEditors.top()->setWindowModified(false);
+        setWindowModified(false);
+        setFileName(names.top()); //reset window name indirectly
         ui->statusBar->showMessage(tr("Document Saved"), 2000 );
         return true;
     }
@@ -438,3 +465,19 @@ bool DavidQuanTextEditor::saveFileAs()
 }
 
 //END OF HELPER FUNCTION SECTION//
+
+//LANGUAGE ACTIONS
+void DavidQuanTextEditor::on_actionEnglish_triggered()
+{
+    switchLanguage(ui->actionEnglish);
+}
+
+void DavidQuanTextEditor::on_actionSpanish_triggered()
+{
+    switchLanguage(ui->actionSpanish);
+}
+
+void DavidQuanTextEditor::on_actionSwedish_triggered()
+{
+    switchLanguage(ui->actionSwedish);
+}

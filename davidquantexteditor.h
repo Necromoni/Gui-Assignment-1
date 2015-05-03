@@ -16,6 +16,8 @@
 #include <QFileDialog>
 #include <QTranslator>
 #include <QActionGroup>
+#include <QPrinter>
+#include <QPrintDialog>
 
 
 namespace Ui {
@@ -61,6 +63,12 @@ private slots:
     void on_actionPrint_triggered();
 
     void switchLanguage(QAction *);
+
+    void on_actionEnglish_triggered();
+
+    void on_actionSpanish_triggered();
+
+    void on_actionSwedish_triggered();
 
 private:
     Ui::DavidQuanTextEditor *ui;
